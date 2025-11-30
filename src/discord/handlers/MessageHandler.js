@@ -6,6 +6,7 @@ class MessageHandler {
   constructor(discord, command) {
     this.discord = discord;
     this.command = command;
+    this.recentlyRun = new Set();
   }
 
   async onMessage(message) {
@@ -21,6 +22,16 @@ class MessageHandler {
       }
 
       const content = this.stripDiscordContent(message).trim();
+
+      // If a recent !run was executed with the same text, ignore matching messages for 0.5s
+      if (!content.startsWith("!run") && this.recentlyRun.size > 0) {
+        for (const pattern of this.recentlyRun) {
+          if (!pattern) continue;
+          if (content.includes(pattern)) {
+            return;
+          }
+        }
+      }
       // Prefix command: !run
       if (content.startsWith("!run")) {
         const validChannelIds = [config.discord.channels.officerChannel, config.discord.channels.guildChatChannel, config.discord.channels.debugChannel];
@@ -53,9 +64,14 @@ class MessageHandler {
           const minecraft = this.discord.app.minecraft;
           if (minecraft && minecraft.bot && typeof minecraft.bot.chat === "function") {
             minecraft.bot.chat(args);
-            const { SuccessEmbed } = require("../../contracts/embedHandler.js");
-            const embed = new SuccessEmbed("Sent message to Minecraft chat.");
-            await message.reply({ embeds: [embed] });
+            // Temporarily ignore messages that contain the same text for 0.5 seconds
+            try {
+              this.recentlyRun.add(args);
+              setTimeout(() => this.recentlyRun.delete(args), 500);
+            } catch (e) {
+              // ignore
+            }
+            // Do not send a success reply to keep the channel clean
           }
         } catch (e) {
           console.error(e);

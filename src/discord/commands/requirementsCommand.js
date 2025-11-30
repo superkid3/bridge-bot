@@ -102,11 +102,7 @@ function generateEmbed(data) {
         inline: true
       }
     )
-    .setThumbnail(`https://www.mc-heads.net/avatar/${data.nickname}`)
-    .setFooter({
-      text: `by @duckysolucky | /help [command] for more information`,
-      iconURL: "https://imgur.com/tgwQJTX.png"
-    });
+    .setThumbnail(`https://www.mc-heads.net/avatar/${data.nickname}`);
 }
 
 module.exports = {

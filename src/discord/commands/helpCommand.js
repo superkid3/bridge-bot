@@ -38,10 +38,7 @@ module.exports = {
               inline: true
             }
           )
-          .setFooter({
-            text: "by @duckysolucky | /help [command] for more information",
-            iconURL: "https://imgur.com/tgwQJTX.png"
-          });
+          ;
 
         await interaction.followUp({ embeds: [helpMenu] });
       } else {
@@ -78,10 +75,7 @@ module.exports = {
         const embed = new Embed()
           .setTitle(`**${type === "discord" ? "/" : config.minecraft.bot.prefix}${command.name}**`)
           .setDescription(description + "\n")
-          .setFooter({
-            text: "by @duckysolucky | () = required, [] = optional",
-            iconURL: "https://imgur.com/tgwQJTX.png"
-          });
+          ;
 
         await interaction.followUp({ embeds: [embed] });
       }
