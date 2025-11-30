@@ -1,5 +1,6 @@
 const config = require("../../../config.json");
 const { unemojify } = require("node-emoji");
+const serverSettings = require("../serverSettings.js");
 
 class MessageHandler {
   constructor(discord, command) {
@@ -20,6 +21,48 @@ class MessageHandler {
       }
 
       const content = this.stripDiscordContent(message).trim();
+      // Prefix command: !run
+      if (content.startsWith("!run")) {
+        const validChannelIds = [config.discord.channels.officerChannel, config.discord.channels.guildChatChannel, config.discord.channels.debugChannel];
+        if (!validChannelIds.includes(message.channel.id)) {
+          return;
+        }
+
+        const args = content.slice(4).trim();
+        if (!args || args.length === 0) {
+          // ignore empty run
+          return;
+        }
+
+        try {
+          const guildId = message.guild.id;
+          const settings = serverSettings.getSettings(guildId);
+          const adminRoleId = settings?.adminRole;
+
+          const memberRoles = (await message.guild.members.fetch(message.author.id)).roles.cache.map((r) => r.id);
+
+          if (!adminRoleId || !memberRoles.includes(adminRoleId)) {
+            // Not authorized
+            const { ErrorEmbed } = require("../../contracts/embedHandler.js");
+            const err = new ErrorEmbed("You do not have the configured admin role for this server.");
+            await message.reply({ embeds: [err], ephemeral: true });
+            return;
+          }
+
+          // Send the provided text directly through the Minecraft bot
+          const minecraft = this.discord.app.minecraft;
+          if (minecraft && minecraft.bot && typeof minecraft.bot.chat === "function") {
+            minecraft.bot.chat(args);
+            const { SuccessEmbed } = require("../../contracts/embedHandler.js");
+            const embed = new SuccessEmbed("Sent message to Minecraft chat.");
+            await message.reply({ embeds: [embed] });
+          }
+        } catch (e) {
+          console.error(e);
+        }
+
+        return;
+      }
       if (content.length === 0 && message.attachments.size === 0) {
         return;
       }
